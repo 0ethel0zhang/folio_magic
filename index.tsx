@@ -562,7 +562,7 @@ const App = () => {
       {/* Contribution Section */}
       <div className="pt-6 flex flex-col items-center space-y-4">
         <p className="text-neutral-500 text-sm font-light max-w-md mx-auto text-center">
-          Contribute to the development b sending me a Venmo gift or{' '}
+          Contribute to the development by {' '}
           <a
             href="https://docs.google.com/forms/d/12rjJqeeK2jP7SIyxDmytcgdyOH2WWcCfxrEpxjGO71w/edit"
             target="_blank"
@@ -571,7 +571,8 @@ const App = () => {
           >
             giving feedback
           </a>
-          {' '} :)
+          {' '}sending me a Venmo gift :)
+          Developed by BringEZBack @ 2025.
         </p>
         <div className="w-[30%] min-w-[120px] max-w-[200px] hover:opacity-100 opacity-90 transition-opacity">
           <img
@@ -580,6 +581,9 @@ const App = () => {
             className="w-full h-auto rounded-xl border border-neutral-800/50"
           />
         </div>
+        <p>
+        Developed by BringEZBack @ 2025.
+        </p>
       </div>
     </div>
   );
