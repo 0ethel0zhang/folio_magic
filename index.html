@@ -6,6 +6,8 @@
   <title>Video to Portfolio</title>
   <link rel="icon" href="data:,">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Babel is required to run JSX/TSX directly in the browser without a build step -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-neutral-950">
   <div id="root"></div>
@@ -21,6 +23,7 @@
   }
 }
 </script>
-  <script type="module" src="./index.tsx"></script>
+  <!-- data-type="module" tells Babel to treat this as an ES module with imports -->
+  <script type="text/babel" data-type="module" data-presets="typescript,react" src="./index.tsx"></script>
 </body>
 </html>
