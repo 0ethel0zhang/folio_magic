@@ -292,7 +292,7 @@ const App = () => {
         <div className="flex items-center space-x-2 md:space-x-3">
           <button
             onClick={() => selectAll(frames.some(f => !f.selected))}
-            className="px-3 py-2 text-sm font-medium text-neutral-400 hover:text-white transition-colors hidden sm:block"
+            className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-neutral-400 hover:text-white transition-colors whitespace-nowrap"
             disabled={isZipping}
           >
             {frames.some(f => !f.selected) ? 'Select All' : 'Deselect All'}
