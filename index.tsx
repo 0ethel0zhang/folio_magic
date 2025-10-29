@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Upload, Download, RefreshCw, Trash2, CheckCircle, Loader2 } from 'lucide-react';
+import { Upload, Download, RefreshCw, Trash2, CheckCircle, Loader2, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import JSZip from 'jszip';
 
 interface PortfolioFrame {
@@ -18,6 +18,13 @@ const App = () => {
   const [frames, setFrames] = useState<PortfolioFrame[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isZipping, setIsZipping] = useState(false);
+  const [expandedFrame, setExpandedFrame] = useState<PortfolioFrame | null>(null);
+
+  // Keep track of frames for safe unmount cleanup without triggering re-renders
+  const framesRef = useRef(frames);
+  useEffect(() => {
+      framesRef.current = frames;
+  }, [frames]);
 
   // --- Video Processing Engine ---
   const processVideo = async (file: File) => {
@@ -79,9 +86,11 @@ const App = () => {
         // Wait for seek to complete and frame to be ready
         await new Promise(resolve => {
           video.onseeked = () => {
-             // requestAnimationFrame helps ensure the new frame is actually painted to the video element
-             // before we draw it to canvas.
-             requestAnimationFrame(() => resolve(null));
+             // Double requestAnimationFrame helps ensure the new frame is actually painted 
+             // to the video element's internal buffer before we draw it to canvas.
+             requestAnimationFrame(() => {
+                 requestAnimationFrame(() => resolve(null));
+             });
           };
         });
 
@@ -140,15 +149,51 @@ const App = () => {
     }
   };
 
+  const handleRerun = useCallback(() => {
+    // Cleanup all object URLs
+    framesRef.current.forEach(f => URL.revokeObjectURL(f.url));
+    setFrames([]);
+    setVideoFile(null);
+    setProgress(0);
+    setIsProcessing(false);
+  }, []);
+
   const toggleFrameSelection = (id: string) => {
-    setFrames(frames.map(f => f.id === id ? { ...f, selected: !f.selected } : f));
+    setFrames(frames => frames.map(f => f.id === id ? { ...f, selected: !f.selected } : f));
+    // Also update expanded frame if it's the one being toggled
+    if (expandedFrame && expandedFrame.id === id) {
+        setExpandedFrame(prev => prev ? { ...prev, selected: !prev.selected } : null);
+    }
   };
 
   const deleteFrame = (id: string) => {
-    setFrames(frames.filter(f => f.id !== id));
-    // Also revoke object URL to free memory
-    const frame = frames.find(f => f.id === id);
-    if (frame) URL.revokeObjectURL(frame.url);
+    const frameIndex = frames.findIndex(f => f.id === id);
+    // Prefer next frame, otherwise previous frame
+    const nextFrameToShow = frames[frameIndex + 1] || frames[frameIndex - 1] || null;
+
+    const newFrames = frames.filter(f => f.id !== id);
+
+    // Revoke object URL to free memory
+    const frameToDelete = frames.find(f => f.id === id);
+    if (frameToDelete) URL.revokeObjectURL(frameToDelete.url);
+
+    if (newFrames.length === 0) {
+        // If no frames left, exit expanded mode and prompt user
+        setExpandedFrame(null);
+        setFrames([]); // Visually clear immediately
+        
+        // Use setTimeout to allow UI to settle before blocking alert
+        setTimeout(() => {
+            window.alert("Doesn't seem like this video has good photos. Want to try a different video?");
+            handleRerun();
+        }, 100);
+    } else {
+        setFrames(newFrames);
+        // If currently expanded frame was deleted, move to next/prev
+        if (expandedFrame && expandedFrame.id === id) {
+            setExpandedFrame(nextFrameToShow);
+        }
+    }
   };
 
   const selectAll = (select: boolean) => {
@@ -192,21 +237,46 @@ const App = () => {
     }
   };
 
-  const handleRerun = () => {
-    // Cleanup all object URLs
-    frames.forEach(f => URL.revokeObjectURL(f.url));
-    setFrames([]);
-    setVideoFile(null);
-    setProgress(0);
-    setIsProcessing(false);
-  };
-
-  // Cleanup on unmount
+  // Cleanup ONLY on true component unmount, not on every frames state change
   useEffect(() => {
     return () => {
-      frames.forEach(f => URL.revokeObjectURL(f.url));
+      framesRef.current.forEach(f => URL.revokeObjectURL(f.url));
     };
-  }, [frames]);
+  }, []);
+
+  // Navigation logic
+  const currentIndex = expandedFrame ? frames.findIndex(f => f.id === expandedFrame.id) : -1;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex !== -1 && currentIndex < frames.length - 1;
+
+  const goToPrev = useCallback(() => {
+      if (hasPrev) setExpandedFrame(frames[currentIndex - 1]);
+  }, [hasPrev, currentIndex, frames]);
+
+  const goToNext = useCallback(() => {
+      if (hasNext) setExpandedFrame(frames[currentIndex + 1]);
+  }, [hasNext, currentIndex, frames]);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!expandedFrame) return;
+      
+      switch (e.key) {
+          case 'Escape':
+              setExpandedFrame(null);
+              break;
+          case 'ArrowLeft':
+              goToPrev();
+              break;
+          case 'ArrowRight':
+              goToNext();
+              break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [expandedFrame, goToPrev, goToNext]);
 
   const selectedCount = frames.filter(f => f.selected).length;
 
@@ -214,8 +284,8 @@ const App = () => {
 
   if (!videoFile && !isProcessing && frames.length === 0) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white flex flex-col items-center justify-center p-6">
-        <div className="max-w-2xl w-full text-center space-y-8">
+      <div className="min-h-screen bg-neutral-950 text-white flex flex-col items-center justify-center p-6 overflow-y-auto">
+        <div className="max-w-2xl w-full text-center space-y-8 my-8">
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-light tracking-tight text-neutral-100">Video to Portfolio</h1>
             <p className="text-neutral-400 text-lg">Extract high-fidelity stills from your videos for commercial use.</p>
@@ -252,6 +322,20 @@ const App = () => {
               <span className="sr-only">Upload Video</span>
             </label>
           </div>
+
+          {/* Contribution Section */}
+          <div className="pt-6 flex flex-col items-center space-y-4">
+            <p className="text-neutral-500 text-sm font-light max-w-md mx-auto">
+              If you like this tool, feel free to contribute to the development by sending a Venmo gift :)
+            </p>
+            <div className="w-[30%] min-w-[120px] max-w-[200px] hover:opacity-100 opacity-90 transition-opacity">
+              <img
+                src="https://github.com/0ethel0zhang/folio_magic/blob/main/venmo_qrcode.png?raw=true"
+                alt="Venmo QR Code"
+                className="w-full h-auto rounded-xl border border-neutral-800/50"
+              />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -282,17 +366,20 @@ const App = () => {
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex flex-col">
       {/* Fixed Header */}
-      <header className="bg-neutral-900/80 backdrop-blur-md border-b border-neutral-800 sticky top-0 z-50 px-4 md:px-6 py-4 flex items-center justify-between">
+      <header className="bg-neutral-900/80 backdrop-blur-md border-b border-neutral-800 sticky top-0 z-40 px-4 md:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
            <h1 className="text-lg md:text-xl font-medium tracking-tight text-neutral-100">Portfolio Curator</h1>
            <span className="text-neutral-700 hidden sm:block">|</span>
-           <p className="text-neutral-400 text-sm md:text-base">{selectedCount} <span className="hidden sm:inline">of {frames.length}</span> selected</p>
+           <p className="text-neutral-400 text-sm md:text-base">{selectedCount} selected</p>
         </div>
 
         <div className="flex items-center space-x-2 md:space-x-3">
+          <span className="text-sm font-mono text-neutral-400 bg-neutral-800/80 px-3 py-1.5 rounded-full hidden sm:block mr-2">
+             {frames.length} left
+          </span>
           <button
             onClick={() => selectAll(frames.some(f => !f.selected))}
-            className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-neutral-400 hover:text-white transition-colors whitespace-nowrap"
+            className="px-3 py-2 text-sm font-medium text-neutral-400 hover:text-white transition-colors whitespace-nowrap"
             disabled={isZipping}
           >
             {frames.some(f => !f.selected) ? 'Select All' : 'Deselect All'}
@@ -335,25 +422,35 @@ const App = () => {
               key={frame.id}
               className={`
                 relative group aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 cursor-pointer border transition-all duration-200
-                ${frame.selected ? 'border-white/40 ring-1 ring-white/10' : 'border-transparent opacity-60 hover:opacity-100'}
+                ${frame.selected ? 'border-white/40 ring-1 ring-white/10' : 'border-transparent opacity-80 hover:opacity-100'}
               `}
-              onClick={() => !isZipping && toggleFrameSelection(frame.id)}
+              onClick={() => !isZipping && setExpandedFrame(frame)}
             >
               <img
                 src={frame.url}
                 alt={`Frame at ${frame.timestamp}s`}
                 className="w-full h-full object-cover"
                 loading="lazy"
+                onError={(e) => {
+                    // Visual indicator if frame breaks, though fix above should prevent this.
+                    (e.target as HTMLImageElement).style.opacity = '0.3';
+                }}
               />
 
-              {/* Selection Indicator */}
-              <div className="absolute top-3 left-3 transition-transform duration-200 z-10">
+              {/* Selection Indicator - Now a button to prevent bubble up */}
+              <button
+                className="absolute top-3 left-3 transition-transform duration-200 z-10 focus:outline-none"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFrameSelection(frame.id);
+                }}
+              >
                  {frame.selected ? (
                    <CheckCircle className="w-6 h-6 text-white fill-black/50 drop-shadow-lg" />
                  ) : (
-                   <div className="w-5 h-5 rounded-full border-2 border-white/30 bg-black/20 backdrop-blur-sm group-hover:border-white/70 transition-colors"></div>
+                   <div className="w-5 h-5 rounded-full border-2 border-white/50 bg-black/20 backdrop-blur-sm hover:border-white transition-colors"></div>
                  )}
-              </div>
+              </button>
 
                {/* Hover Overlay & Actions */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -379,6 +476,87 @@ const App = () => {
           ))}
         </div>
       </main>
+
+      {/* Lightbox Modal */}
+      {expandedFrame && (
+        <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setExpandedFrame(null)}
+        >
+             {/* Top Right Controls */}
+             <div className="absolute top-4 right-4 flex items-center space-x-3 z-50" onClick={e => e.stopPropagation()}>
+                 <span className="text-sm font-mono text-neutral-300 bg-black/50 px-3 py-1.5 rounded-full backdrop-blur-md">
+                    {frames.length} left
+                 </span>
+                 <button
+                    className="p-2 text-neutral-400 hover:text-red-400 bg-black/50 rounded-full backdrop-blur-md transition-colors"
+                    onClick={() => deleteFrame(expandedFrame.id)}
+                    title="Delete frame"
+                 >
+                     <Trash2 className="w-6 h-6" />
+                 </button>
+                 <button 
+                    className="p-2 text-neutral-400 hover:text-white bg-black/50 rounded-full backdrop-blur-md transition-colors"
+                    onClick={() => setExpandedFrame(null)}
+                    title="Close"
+                 >
+                    <X className="w-6 h-6" />
+                 </button>
+             </div>
+
+            {/* Top Bar Info */}
+             <div className="absolute top-4 left-4 flex items-center space-x-4 z-50" onClick={e => e.stopPropagation()}>
+                <span className="text-sm font-mono text-neutral-300 bg-black/50 px-3 py-1.5 rounded-full backdrop-blur-md">
+                    {new Date(expandedFrame.timestamp * 1000).toISOString().substr(14, 5)}
+                </span>
+                <button
+                    onClick={() => toggleFrameSelection(expandedFrame.id)}
+                    className={`
+                        flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-md transition-colors
+                        ${expandedFrame.selected 
+                            ? 'bg-white text-black hover:bg-neutral-200' 
+                            : 'bg-black/50 text-white border border-white/20 hover:bg-black/70'}
+                    `}
+                >
+                    {expandedFrame.selected ? <CheckCircle className="w-4 h-4 fill-black/10" /> : <div className="w-4 h-4 rounded-full border-2 border-current" />}
+                    <span>{expandedFrame.selected ? 'Selected' : 'Select'}</span>
+                </button>
+             </div>
+
+            {/* Navigation Arrows */}
+            {hasPrev && (
+                <button
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-neutral-400 hover:text-white bg-black/30 hover:bg-black/60 rounded-full backdrop-blur-md transition-all z-50"
+                    onClick={(e) => { e.stopPropagation(); goToPrev(); }}
+                    title="Previous frame (Left Arrow)"
+                >
+                    <ChevronLeft className="w-8 h-8" />
+                </button>
+            )}
+            {hasNext && (
+                <button
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-neutral-400 hover:text-white bg-black/30 hover:bg-black/60 rounded-full backdrop-blur-md transition-all z-50"
+                    onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                    title="Next frame (Right Arrow)"
+                >
+                    <ChevronRight className="w-8 h-8" />
+                </button>
+            )}
+
+            {/* Image Container */}
+            <div className="w-full h-full p-4 md:p-12 flex items-center justify-center pointer-events-none">
+                 <img
+                    src={expandedFrame.url}
+                    alt="Expanded frame"
+                    className="max-w-full max-h-full object-contain shadow-2xl pointer-events-auto"
+                    onClick={e => e.stopPropagation()}
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).style.opacity = '0.5';
+                    }}
+                />
+            </div>
+        </div>
+      )}
     </div>
   );
 };
