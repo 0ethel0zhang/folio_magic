@@ -296,7 +296,7 @@ const App = () => {
             onDragLeave={() => setIsDragging(false)}
             onDrop={onDrop}
             className={`
-              border-2 border-dashed rounded-2xl p-12 md:p-16 transition-all duration-200 ease-out
+              relative border-2 border-dashed rounded-2xl p-12 md:p-16 transition-all duration-200 ease-out
               flex flex-col items-center justify-center space-y-4 cursor-pointer group
               ${isDragging ? 'border-blue-500 bg-blue-500/10 scale-[1.02]' : 'border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900/50'}
             `}
@@ -325,16 +325,18 @@ const App = () => {
 
           {/* Contribution Section */}
           <div className="pt-6 flex flex-col items-center space-y-4">
-            <p className="text-neutral-500 text-sm font-light max-w-md mx-auto">
-              If you like this tool, feel free to contribute to the development by sending a Venmo gift :)
+            <p className="text-neutral-500 text-sm font-light max-w-md mx-auto text-center">
+              Contribute to the development by {' '}
+              <a
+                href="https://docs.google.com/forms/d/12rjJqeeK2jP7SIyxDmytcgdyOH2WWcCfxrEpxjGO71w/edit"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400/80 hover:text-blue-300 underline underline-offset-4 transition-colors"
+              >
+                giving feedback
+              </a>
+              {' '} :)
             </p>
-            <div className="w-[30%] min-w-[120px] max-w-[200px] hover:opacity-100 opacity-90 transition-opacity">
-              <img
-                src="https://github.com/0ethel0zhang/folio_magic/blob/main/venmo_qrcode.png?raw=true"
-                alt="Venmo QR Code"
-                className="w-full h-auto rounded-xl border border-neutral-800/50"
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -557,6 +559,28 @@ const App = () => {
             </div>
         </div>
       )}
+      {/* Contribution Section */}
+      <div className="pt-6 flex flex-col items-center space-y-4">
+        <p className="text-neutral-500 text-sm font-light max-w-md mx-auto text-center">
+          Contribute to the development b sending me a Venmo gift or{' '}
+          <a
+            href="https://docs.google.com/forms/d/12rjJqeeK2jP7SIyxDmytcgdyOH2WWcCfxrEpxjGO71w/edit"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400/80 hover:text-blue-300 underline underline-offset-4 transition-colors"
+          >
+            giving feedback
+          </a>
+          {' '} :)
+        </p>
+        <div className="w-[30%] min-w-[120px] max-w-[200px] hover:opacity-100 opacity-90 transition-opacity">
+          <img
+            src="https://github.com/0ethel0zhang/folio_magic/blob/main/venmo_qr.png?raw=true"
+            alt="Venmo QR Code"
+            className="w-full h-auto rounded-xl border border-neutral-800/50"
+          />
+        </div>
+      </div>
     </div>
   );
 };
