@@ -36,12 +36,20 @@ const App = () => {
     video.src = URL.createObjectURL(file);
     video.muted = true;
     video.playsInline = true;
+    video.autoplay = true; // Helps 'wake up' decoders on some mobile devices
     video.crossOrigin = "anonymous";
-    // IMPORTANT: Attach to DOM but keep hidden. Browsers often won't decode off-screen videos.
+    
+    // IMPORTANT: Mobile browsers often won't decode if completely off-screen or opacity 0.
+    // We make it technically visible but tiny and transparent-ish.
     video.style.position = 'fixed';
-    video.style.top = '-9999px';
-    video.style.left = '-9999px';
-    video.style.opacity = '0';
+    video.style.top = '0';
+    video.style.left = '0';
+    video.style.width = '1px';
+    video.style.height = '1px';
+    video.style.opacity = '0.01';
+    video.style.pointerEvents = 'none';
+    video.style.zIndex = '-1000';
+    
     document.body.appendChild(video);
 
     // Wait for metadata to load
@@ -114,7 +122,8 @@ const App = () => {
                 }, 2000); // 2 second max wait per frame
 
                 const onSeeked = () => {
-                    // Ensure we have data to draw
+                    // Ensure we have data to draw. Mobile sometimes needs a slightly higher readyState 
+                    // or just a tiny bit more time even after seeked fires.
                     if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
                         clearTimeout(timeoutId);
                         // Double rAF to ensure the frame is actually painted to the video element's internal buffer
@@ -619,7 +628,7 @@ const App = () => {
           >
             giving feedback
           </a>
-          {' '}or sending me a Venmo gift :)
+          {' '} :)
         </p>
         <div className="w-[30%] min-w-[120px] max-w-[200px] hover:opacity-100 opacity-90 transition-opacity">
           <img
