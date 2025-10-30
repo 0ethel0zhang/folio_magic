@@ -544,7 +544,7 @@ const App = () => {
              {/* Top Right Controls */}
              <div className="absolute top-4 right-4 flex items-center space-x-3 z-50" onClick={e => e.stopPropagation()}>
                  <span className="text-sm font-mono text-neutral-300 bg-black/50 px-3 py-1.5 rounded-full backdrop-blur-md">
-                    {frames.length} left
+                    {currentIndex + 1} / {frames.length}
                  </span>
                  <button
                     className="p-2 text-neutral-400 hover:text-red-400 bg-black/50 rounded-full backdrop-blur-md transition-colors"
