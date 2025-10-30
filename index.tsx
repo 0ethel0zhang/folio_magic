@@ -355,7 +355,7 @@ const App = () => {
             <p className="text-neutral-500 text-sm font-light max-w-md mx-auto text-center">
               Contribute to the development by {' '}
               <a
-                href="https://docs.google.com/forms/d/12rjJqeeK2jP7SIyxDmytcgdyOH2WWcCfxrEpxjGO71w/edit"
+                href="https://docs.google.com/forms/d/e/1FAIpQLSeXTkgfM2dzjdU6CVtiQ6EReHgcmdK5KzmGmNZOuO_p50X_kg/viewform"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400/80 hover:text-blue-300 underline underline-offset-4 transition-colors"
@@ -593,7 +593,7 @@ const App = () => {
         <p className="text-neutral-500 text-sm font-light max-w-md mx-auto text-center">
           Contribute to the development by {' '}
           <a
-            href="https://docs.google.com/forms/d/12rjJqeeK2jP7SIyxDmytcgdyOH2WWcCfxrEpxjGO71w/edit"
+            href="https://docs.google.com/forms/d/e/1FAIpQLSeXTkgfM2dzjdU6CVtiQ6EReHgcmdK5KzmGmNZOuO_p50X_kg/viewform"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-400/80 hover:text-blue-300 underline underline-offset-4 transition-colors"
