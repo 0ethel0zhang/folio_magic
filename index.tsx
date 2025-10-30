@@ -314,8 +314,8 @@ const App = () => {
       <div className="min-h-screen bg-neutral-950 text-white flex flex-col items-center justify-center p-6 overflow-y-auto">
         <div className="max-w-2xl w-full text-center space-y-8 my-8">
           <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl font-light tracking-tight text-neutral-100">Video to Portfolio</h1>
-            <p className="text-neutral-400 text-lg">Extract high-fidelity stills from your videos for commercial use.</p>
+            <h1 className="text-4xl md:text-5xl font-light tracking-tight text-neutral-100">Folio</h1>
+            <p className="text-neutral-400 text-lg">Video to Portfolio. Extract high-fidelity stills from your videos. In seconds.</p>
           </div>
 
           <div
