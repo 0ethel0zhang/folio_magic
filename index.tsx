@@ -37,6 +37,12 @@ const App = () => {
     video.muted = true;
     video.playsInline = true;
     video.crossOrigin = "anonymous";
+    // IMPORTANT: Attach to DOM but keep hidden. Browsers often won't decode off-screen videos.
+    video.style.position = 'fixed';
+    video.style.top = '-9999px';
+    video.style.left = '-9999px';
+    video.style.opacity = '0';
+    document.body.appendChild(video);
 
     // Wait for metadata to load
     try {
@@ -48,6 +54,7 @@ const App = () => {
         });
     } catch (e) {
         alert("Could not load video metadata. The file might be corrupt or unsupported.");
+        if (video.parentNode) document.body.removeChild(video);
         setIsProcessing(false);
         return;
     }
@@ -73,6 +80,7 @@ const App = () => {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     if (!ctx) {
+      if (video.parentNode) document.body.removeChild(video);
       setIsProcessing(false);
       alert("Could not initialize canvas for frame extraction.");
       return;
@@ -105,13 +113,21 @@ const App = () => {
                     resolve(null); 
                 }, 2000); // 2 second max wait per frame
 
-                video.onseeked = () => {
-                    clearTimeout(timeoutId);
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => resolve(null));
-                    });
+                const onSeeked = () => {
+                    // Ensure we have data to draw
+                    if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
+                        clearTimeout(timeoutId);
+                        // Double rAF to ensure the frame is actually painted to the video element's internal buffer
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => resolve(null));
+                        });
+                    } else {
+                        // If seeked fired but data isn't ready, wait a tiny bit more
+                        setTimeout(onSeeked, 50);
+                    }
                 };
-                
+
+                video.onseeked = onSeeked;
                 video.onerror = (e) => {
                      clearTimeout(timeoutId);
                      reject(e);
@@ -146,6 +162,9 @@ const App = () => {
     } finally {
       // Cleanup
       URL.revokeObjectURL(video.src);
+      if (video.parentNode) {
+          document.body.removeChild(video);
+      }
       video.remove();
       canvas.remove();
 
