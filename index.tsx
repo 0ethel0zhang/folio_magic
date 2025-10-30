@@ -52,14 +52,20 @@ const App = () => {
         return;
     }
 
-    const duration = video.duration || 1; // fallback to avoid Infinity/NaN issues
+    // Ensure sensible duration. Fallback to 1s if 0/NaN, cap if Infinity (streaming).
+    let duration = video.duration;
+    if (!Number.isFinite(duration) || duration <= 0) {
+        duration = 1;
+    }
+
     const width = video.videoWidth;
     const height = video.videoHeight;
 
     // Target roughly 30 frames for a good portfolio selection without crashing memory
     const targetFrameCount = 30;
-    // Ensure we don't get stuck in an infinite loop if duration is 0 or very small
-    const interval = Math.max(0.5, duration / targetFrameCount);
+    // Allow tighter spacing for short videos (down to 0.1s), ensuring we get enough frames
+    // but don't over-process very long videos.
+    const interval = Math.max(0.1, duration / targetFrameCount);
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -73,31 +79,52 @@ const App = () => {
     }
 
     const newFrames: PortfolioFrame[] = [];
-    // Start slightly in to avoid potential black frames at specifically 0.0s in some containers
-    let currentTime = Math.min(0.5, duration / 2);
+    // Start slightly in to avoid potential black frames at specifically 0.0s
+    let currentTime = Math.min(0.1, duration / 10);
+    
+    // Safeguard: hard limit on iterations to prevent any possibility of infinite loops
+    let loopCount = 0;
+    const MAX_LOOPS = 60; 
 
     try {
-      while (currentTime < duration) {
-        // Update progress
-        setProgress(Math.min(99, Math.round((currentTime / duration) * 100)));
+      while (currentTime < duration && loopCount < MAX_LOOPS) {
+        loopCount++;
+        
+        // Update progress based on time or hit count
+        const timeProgress = (currentTime / duration) * 100;
+        const loopProgress = (loopCount / MAX_LOOPS) * 100;
+        setProgress(Math.min(99, Math.round(Math.max(timeProgress, loopProgress))));
 
         video.currentTime = currentTime;
 
-        // Wait for seek to complete and frame to be ready
-        await new Promise(resolve => {
-          video.onseeked = () => {
-             // Double requestAnimationFrame helps ensure the new frame is actually painted 
-             // to the video element's internal buffer before we draw it to canvas.
-             requestAnimationFrame(() => {
-                 requestAnimationFrame(() => resolve(null));
-             });
-          };
-        });
+        // Wait for seek to complete and frame to be ready, with a timeout safeguard
+        try {
+            await new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                    console.warn(`Frame seek timed out at ${currentTime}s, skipping.`);
+                    resolve(null); 
+                }, 2000); // 2 second max wait per frame
+
+                video.onseeked = () => {
+                    clearTimeout(timeoutId);
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => resolve(null));
+                    });
+                };
+                
+                video.onerror = (e) => {
+                     clearTimeout(timeoutId);
+                     reject(e);
+                }
+            });
+        } catch (e) {
+            console.error("Error seeking frame:", e);
+        }
 
         // Draw frame to canvas
         ctx.drawImage(video, 0, 0, width, height);
 
-        // Convert to blob for better memory management than straight data URLs for large images
+        // Convert to blob
         const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
 
         if (blob) {
@@ -115,7 +142,7 @@ const App = () => {
       }
     } catch (error) {
       console.error("Error extracting frames:", error);
-      alert("An error occurred while processing the video.");
+      alert("An error occurred while processing the video. Some frames might be missing.");
     } finally {
       // Cleanup
       URL.revokeObjectURL(video.src);
@@ -322,22 +349,23 @@ const App = () => {
               <span className="sr-only">Upload Video</span>
             </label>
           </div>
-
+          
           {/* Contribution Section */}
           <div className="pt-6 flex flex-col items-center space-y-4">
             <p className="text-neutral-500 text-sm font-light max-w-md mx-auto text-center">
               Contribute to the development by {' '}
               <a
-                href="https://docs.google.com/forms/d/e/1FAIpQLSeXTkgfM2dzjdU6CVtiQ6EReHgcmdK5KzmGmNZOuO_p50X_kg/viewform?usp=dialog"
+                href="https://docs.google.com/forms/d/12rjJqeeK2jP7SIyxDmytcgdyOH2WWcCfxrEpxjGO71w/edit"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400/80 hover:text-blue-300 underline underline-offset-4 transition-colors"
-              >
-                giving feedback
+                >
+              giving feedback
               </a>
               {' '} :)
             </p>
           </div>
+
         </div>
       </div>
     );
@@ -559,20 +587,20 @@ const App = () => {
             </div>
         </div>
       )}
+
       {/* Contribution Section */}
       <div className="pt-6 flex flex-col items-center space-y-4">
         <p className="text-neutral-500 text-sm font-light max-w-md mx-auto text-center">
           Contribute to the development by {' '}
           <a
-            href="https://docs.google.com/forms/d/e/1FAIpQLSeXTkgfM2dzjdU6CVtiQ6EReHgcmdK5KzmGmNZOuO_p50X_kg/viewform?usp=dialog"
+            href="https://docs.google.com/forms/d/12rjJqeeK2jP7SIyxDmytcgdyOH2WWcCfxrEpxjGO71w/edit"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-400/80 hover:text-blue-300 underline underline-offset-4 transition-colors"
           >
             giving feedback
           </a>
-          {' '}sending me a Venmo gift :)
-          Developed by BringEZBack @ 2025.
+          {' '}or sending me a Venmo gift :)
         </p>
         <div className="w-[30%] min-w-[120px] max-w-[200px] hover:opacity-100 opacity-90 transition-opacity">
           <img
@@ -581,8 +609,8 @@ const App = () => {
             className="w-full h-auto rounded-xl border border-neutral-800/50"
           />
         </div>
-        <p>
-        Developed by BringEZBack @ 2025.
+        <p className="text-neutral-500 text-xs font-bold">
+          Developed by BringEZBack @ 2025.
         </p>
       </div>
     </div>
