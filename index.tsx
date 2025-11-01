@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Upload, Download, RefreshCw, Trash2, CheckCircle, Loader2, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Upload, Download, RefreshCw, Trash2, CheckCircle, Loader2, X, Check, ChevronLeft, ChevronRight, Globe } from 'lucide-react';
 import JSZip from 'jszip';
 
 interface PortfolioFrame {
@@ -11,6 +11,202 @@ interface PortfolioFrame {
   timestamp: number;
 }
 
+type Language = 'en' | 'zh' | 'fr' | 'de' | 'es';
+
+const TRANSLATIONS: Record<Language, Record<string, string>> = {
+  en: {
+    tagline: "Video to Portfolio. Extract high-fidelity stills from your videos. In seconds.",
+    dragDrop: "Drag and drop your video here",
+    browse: "or click to browse (MP4, MOV, WebM)",
+    processing: "Analyzing Video & Extracting Stills",
+    complete: "Complete",
+    curatorTitle: "Portfolio Curator",
+    selectedCount: "selected",
+    framesLeft: "left",
+    selectAll: "Select All",
+    deselectAll: "Deselect All",
+    startOver: "Start Over",
+    downloadSelected: "Download Selected",
+    download: "Download",
+    zipping: "Zipping...",
+    deleteFrame: "Delete frame",
+    close: "Close",
+    statusSelected: "Selected",
+    actionSelect: "Select",
+    prevFrame: "Previous frame",
+    nextFrame: "Next frame",
+    errMetadata: "Could not load video metadata. The file might be corrupt or unsupported.",
+    errCanvas: "Could not initialize canvas for frame extraction.",
+    errGeneral: "An error occurred while processing the video. Some frames might be missing.",
+    errInvalid: "Please upload a valid video file.",
+    errNoSel: "No frames selected for download.",
+    errZip: "Could not create zip file for download.",
+    warnBadVideo: "Doesn't seem like this video has good photos. Want to try a different video?",
+    contribPre: "Contribute to the development by",
+    contribLink: "giving feedback",
+    developedBy: "Developed by BringEZBack @ 2025."
+  },
+  zh: {
+    tagline: "视频转作品集。几秒钟内从您的视频中提取高保真静帧。",
+    dragDrop: "将视频拖放到此处",
+    browse: "或点击浏览 (MP4, MOV, WebM)",
+    processing: "正在分析视频并提取静帧",
+    complete: "完成",
+    curatorTitle: "作品集精选",
+    selectedCount: "已选择",
+    framesLeft: "剩余",
+    selectAll: "全选",
+    deselectAll: "取消全选",
+    startOver: "重新开始",
+    downloadSelected: "下载选中项",
+    download: "下载",
+    zipping: "正在压缩...",
+    deleteFrame: "删除帧",
+    close: "关闭",
+    statusSelected: "已选择",
+    actionSelect: "选择",
+    prevFrame: "上一帧",
+    nextFrame: "下一帧",
+    errMetadata: "无法加载视频元数据。文件可能已损坏或不受支持。",
+    errCanvas: "无法初始化画布以进行帧提取。",
+    errGeneral: "处理视频时发生错误。可能会丢失某些帧。",
+    errInvalid: "请上传有效的视频文件。",
+    errNoSel: "未选择要下载的帧。",
+    errZip: "无法创建压缩文件以供下载。",
+    warnBadVideo: "此视频似乎没有好的静帧。要尝试其他视频吗？",
+    contribPre: "帮助我们改进，请",
+    contribLink: "提供反馈",
+    developedBy: "由 BringEZBack 开发 @ 2025."
+  },
+  fr: {
+    tagline: "Vidéo vers Portfolio. Extrayez des images haute fidélité de vos vidéos. En quelques secondes.",
+    dragDrop: "Glissez-déposez votre vidéo ici",
+    browse: "ou cliquez pour parcourir (MP4, MOV, WebM)",
+    processing: "Analyse de la vidéo et extraction des images",
+    complete: "Terminé",
+    curatorTitle: "Curateur de Portfolio",
+    selectedCount: "sélectionnés",
+    framesLeft: "restants",
+    selectAll: "Tout sélectionner",
+    deselectAll: "Tout désélectionner",
+    startOver: "Recommencer",
+    downloadSelected: "Télécharger la sélection",
+    download: "Télécharger",
+    zipping: "Compression...",
+    deleteFrame: "Supprimer l'image",
+    close: "Fermer",
+    statusSelected: "Sélectionné",
+    actionSelect: "Sélectionner",
+    prevFrame: "Image précédente",
+    nextFrame: "Image suivante",
+    errMetadata: "Impossible de charger les métadonnées vidéo. Le fichier est peut-être corrompu ou non pris en charge.",
+    errCanvas: "Impossible d'initialiser le canevas pour l'extraction d'images.",
+    errGeneral: "Une erreur s'est produite lors du traitement de la vidéo. Certaines images peuvent manquer.",
+    errInvalid: "Veuillez télécharger un fichier vidéo valide.",
+    errNoSel: "Aucune image sélectionnée pour le téléchargement.",
+    errZip: "Impossible de créer le fichier zip pour le téléchargement.",
+    warnBadVideo: "Il semble que cette vidéo n'ait pas de bonnes photos. Voulez-vous essayer une autre vidéo ?",
+    contribPre: "Contribuez au développement en",
+    contribLink: "donnant votre avis",
+    developedBy: "Développé par BringEZBack @ 2025."
+  },
+  de: {
+    tagline: "Video zum Portfolio. Extrahieren Sie hochauflösende Standbilder aus Ihren Videos. In Sekunden.",
+    dragDrop: "Ziehen Sie Ihr Video hierher",
+    browse: "oder klicken Sie zum Durchsuchen (MP4, MOV, WebM)",
+    processing: "Video analysieren & Standbilder extrahieren",
+    complete: "Abgeschlossen",
+    curatorTitle: "Portfolio-Kurator",
+    selectedCount: "ausgewählt",
+    framesLeft: "übrig",
+    selectAll: "Alles auswählen",
+    deselectAll: "Alles abwählen",
+    startOver: "Neu starten",
+    downloadSelected: "Auswahl herunterladen",
+    download: "Herunterladen",
+    zipping: "Zippen...",
+    deleteFrame: "Frame löschen",
+    close: "Schließen",
+    statusSelected: "Ausgewählt",
+    actionSelect: "Auswählen",
+    prevFrame: "Vorheriger Frame",
+    nextFrame: "Nächster Frame",
+    errMetadata: "Video-Metadaten konnten nicht geladen werden. Die Datei ist möglicherweise beschädigt oder wird nicht unterstützt.",
+    errCanvas: "Canvas für Frame-Extraktion konnte nicht initialisiert werden.",
+    errGeneral: "Beim Verarbeiten des Videos ist ein Fehler aufgetreten. Einige Frames fehlen möglicherweise.",
+    errInvalid: "Bitte laden Sie eine gültige Videodatei hoch.",
+    errNoSel: "Keine Frames zum Herunterladen ausgewählt.",
+    errZip: "Zip-Datei für den Download konnte nicht erstellt werden.",
+    warnBadVideo: "Es scheint, als hätte dieses Video keine guten Fotos. Möchten Sie ein anderes Video ausprobieren?",
+    contribPre: "Tragen Sie zur Entwicklung bei, indem Sie",
+    contribLink: "Feedback geben",
+    developedBy: "Entwickelt von BringEZBack @ 2025."
+  },
+  es: {
+    tagline: "Video a Portafolio. Extrae imágenes de alta fidelidad de tus videos. En segundos.",
+    dragDrop: "Arrastra y suelta tu video aquí",
+    browse: "o haz clic para buscar (MP4, MOV, WebM)",
+    processing: "Analizando video y extrayendo imágenes",
+    complete: "Completado",
+    curatorTitle: "Curador de Portafolio",
+    selectedCount: "seleccionados",
+    framesLeft: "restantes",
+    selectAll: "Seleccionar todo",
+    deselectAll: "Deseleccionar todo",
+    startOver: "Empezar de nuevo",
+    downloadSelected: "Descargar selección",
+    download: "Descargar",
+    zipping: "Comprimiendo...",
+    deleteFrame: "Eliminar fotograma",
+    close: "Cerrar",
+    statusSelected: "Seleccionado",
+    actionSelect: "Seleccionar",
+    prevFrame: "Fotograma anterior",
+    nextFrame: "Fotograma siguiente",
+    errMetadata: "No se pudieron cargar los metadatos del video. El archivo podría estar corrupto o no ser compatible.",
+    errCanvas: "No se pudo inicializar el lienzo para la extracción de fotogramas.",
+    errGeneral: "Ocurrió un error al procesar el video. Podrían faltar algunos fotogramas.",
+    errInvalid: "Por favor, sube un archivo de video válido.",
+    errNoSel: "No hay fotogramas seleccionados para descargar.",
+    errZip: "No se pudo crear el archivo zip para la descarga.",
+    warnBadVideo: "Parece que este video no tiene buenas fotos. ¿Quieres probar con otro video?",
+    contribPre: "Contribuye al desarrollo",
+    contribLink: "dando tu opinión",
+    developedBy: "Desarrollado por BringEZBack @ 2025."
+  }
+};
+
+const getInitialLanguage = (): Language => {
+    const browserLang = navigator.language.split('-')[0];
+    if (browserLang === 'zh' || browserLang === 'fr' || browserLang === 'de' || browserLang === 'es') {
+        return browserLang;
+    }
+    return 'en';
+};
+
+interface LanguageSelectProps {
+  currentLang: Language;
+  onLanguageChange: (lang: Language) => void;
+}
+
+const LanguageSelect = ({ currentLang, onLanguageChange }: LanguageSelectProps) => (
+    <div className="flex items-center space-x-2 bg-neutral-900/80 rounded-full px-3 py-1 border border-neutral-800 hover:border-neutral-700 transition-colors">
+        <Globe className="w-4 h-4 text-neutral-400" />
+        <select
+            value={currentLang}
+            onChange={(e) => onLanguageChange(e.target.value as Language)}
+            className="bg-transparent text-sm text-neutral-300 outline-none cursor-pointer appearance-none pr-2"
+            aria-label="Select Language"
+        >
+            <option value="en">English</option>
+            <option value="zh">简体中文</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+        </select>
+    </div>
+);
+
 const App = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -19,6 +215,9 @@ const App = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isZipping, setIsZipping] = useState(false);
   const [expandedFrame, setExpandedFrame] = useState<PortfolioFrame | null>(null);
+  const [currentLang, setCurrentLang] = useState<Language>(getInitialLanguage);
+
+  const t = TRANSLATIONS[currentLang];
 
   // Keep track of frames for safe unmount cleanup without triggering re-renders
   const framesRef = useRef(frames);
@@ -61,7 +260,7 @@ const App = () => {
         setTimeout(() => reject(new Error("Video load timeout")), 10000);
         });
     } catch (e) {
-        alert("Could not load video metadata. The file might be corrupt or unsupported.");
+        alert(t.errMetadata);
         if (video.parentNode) document.body.removeChild(video);
         setIsProcessing(false);
         return;
@@ -90,7 +289,7 @@ const App = () => {
     if (!ctx) {
       if (video.parentNode) document.body.removeChild(video);
       setIsProcessing(false);
-      alert("Could not initialize canvas for frame extraction.");
+      alert(t.errCanvas);
       return;
     }
 
@@ -167,7 +366,7 @@ const App = () => {
       }
     } catch (error) {
       console.error("Error extracting frames:", error);
-      alert("An error occurred while processing the video. Some frames might be missing.");
+      alert(t.errGeneral);
     } finally {
       // Cleanup
       URL.revokeObjectURL(video.src);
@@ -192,9 +391,9 @@ const App = () => {
       setVideoFile(file);
       processVideo(file);
     } else {
-      alert('Please upload a valid video file.');
+      alert(t.errInvalid);
     }
-  }, []);
+  }, [t]);
 
   const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -239,7 +438,7 @@ const App = () => {
         
         // Use setTimeout to allow UI to settle before blocking alert
         setTimeout(() => {
-            window.alert("Doesn't seem like this video has good photos. Want to try a different video?");
+            window.alert(t.warnBadVideo);
             handleRerun();
         }, 100);
     } else {
@@ -258,7 +457,7 @@ const App = () => {
   const handleDownload = async () => {
     const selectedFrames = frames.filter(f => f.selected);
     if (selectedFrames.length === 0) {
-      alert("No frames selected for download.");
+      alert(t.errNoSel);
       return;
     }
 
@@ -286,7 +485,7 @@ const App = () => {
 
     } catch (error) {
         console.error("Error creating zip:", error);
-        alert("Could not create zip file for download.");
+        alert(t.errZip);
     } finally {
         setIsZipping(false);
     }
@@ -339,11 +538,14 @@ const App = () => {
 
   if (!videoFile && !isProcessing && frames.length === 0) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white flex flex-col items-center justify-center p-6 overflow-y-auto">
+      <div className="min-h-screen bg-neutral-950 text-white flex flex-col items-center justify-center p-6 overflow-y-auto relative">
+        <div className="absolute top-6 right-6">
+            <LanguageSelect currentLang={currentLang} onLanguageChange={setCurrentLang} />
+        </div>
         <div className="max-w-2xl w-full text-center space-y-8 my-8">
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-light tracking-tight text-neutral-100">Folio</h1>
-            <p className="text-neutral-400 text-lg">Video to Portfolio. Extract high-fidelity stills from your videos. In seconds.</p>
+            <p className="text-neutral-400 text-lg">{t.tagline}</p>
           </div>
 
           <div
@@ -360,8 +562,8 @@ const App = () => {
               <Upload className="w-8 h-8 text-neutral-400 group-hover:text-neutral-200" />
             </div>
             <div className="space-y-2">
-              <p className="text-xl font-medium text-neutral-200">Drag and drop your video here</p>
-              <p className="text-neutral-500">or click to browse (MP4, MOV, WebM)</p>
+              <p className="text-xl font-medium text-neutral-200">{t.dragDrop}</p>
+              <p className="text-neutral-500">{t.browse}</p>
             </div>
             <input
               type="file"
@@ -374,21 +576,21 @@ const App = () => {
               htmlFor="file-upload"
               className="absolute inset-0 cursor-pointer"
             >
-              <span className="sr-only">Upload Video</span>
+              <span className="sr-only">{t.dragDrop}</span>
             </label>
           </div>
           
           {/* Contribution Section */}
           <div className="pt-6 flex flex-col items-center space-y-4">
             <p className="text-neutral-500 text-sm font-light max-w-md mx-auto text-center">
-              Contribute to the development by {' '}
+              {t.contribPre} {' '}
               <a
                 href="https://docs.google.com/forms/d/e/1FAIpQLSeXTkgfM2dzjdU6CVtiQ6EReHgcmdK5KzmGmNZOuO_p50X_kg/viewform"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400/80 hover:text-blue-300 underline underline-offset-4 transition-colors"
                 >
-              giving feedback
+              {t.contribLink}
               </a>
               {' '} :)
             </p>
@@ -406,7 +608,7 @@ const App = () => {
           <div className="relative">
              <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto" />
           </div>
-          <h2 className="text-2xl font-light text-neutral-200 animate-pulse">Analyzing Video & Extracting Stills</h2>
+          <h2 className="text-2xl font-light text-neutral-200 animate-pulse">{t.processing}</h2>
           <div className="space-y-3">
             <div className="h-1.5 w-full bg-neutral-800 rounded-full overflow-hidden">
               <div
@@ -414,7 +616,7 @@ const App = () => {
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="text-neutral-500 text-sm font-mono tracking-wider">{progress}% Complete</p>
+            <p className="text-neutral-500 text-sm font-mono tracking-wider">{progress}% {t.complete}</p>
           </div>
         </div>
       </div>
@@ -426,30 +628,33 @@ const App = () => {
       {/* Fixed Header */}
       <header className="bg-neutral-900/80 backdrop-blur-md border-b border-neutral-800 sticky top-0 z-40 px-4 md:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-           <h1 className="text-lg md:text-xl font-medium tracking-tight text-neutral-100">Portfolio Curator</h1>
+           <h1 className="text-lg md:text-xl font-medium tracking-tight text-neutral-100">{t.curatorTitle}</h1>
            <span className="text-neutral-700 hidden sm:block">|</span>
-           <p className="text-neutral-400 text-sm md:text-base">{selectedCount} selected</p>
+           <p className="text-neutral-400 text-sm md:text-base">{selectedCount} {t.selectedCount}</p>
         </div>
 
         <div className="flex items-center space-x-2 md:space-x-3">
+          <div className="hidden md:block">
+             <LanguageSelect currentLang={currentLang} onLanguageChange={setCurrentLang} />
+          </div>
           <span className="text-sm font-mono text-neutral-400 bg-neutral-800/80 px-3 py-1.5 rounded-full hidden sm:block mr-2">
-             {frames.length} left
+             {frames.length} {t.framesLeft}
           </span>
           <button
             onClick={() => selectAll(frames.some(f => !f.selected))}
             className="px-3 py-2 text-sm font-medium text-neutral-400 hover:text-white transition-colors whitespace-nowrap"
             disabled={isZipping}
           >
-            {frames.some(f => !f.selected) ? 'Select All' : 'Deselect All'}
+            {frames.some(f => !f.selected) ? t.selectAll : t.deselectAll}
           </button>
           <button
             onClick={handleRerun}
             className="p-2 md:px-4 md:py-2 rounded-lg text-sm font-medium text-neutral-300 hover:bg-neutral-800 transition-colors"
-            title="Start Over"
+            title={t.startOver}
             disabled={isZipping}
           >
             <RefreshCw className="w-5 h-5 sm:hidden" />
-            <span className="hidden sm:inline">Start Over</span>
+            <span className="hidden sm:inline">{t.startOver}</span>
           </button>
           <button
             onClick={handleDownload}
@@ -466,8 +671,8 @@ const App = () => {
             ) : (
                 <Download className="w-4 h-4" />
             )}
-            <span className="hidden sm:inline">{isZipping ? 'Zipping...' : 'Download Selected'}</span>
-            <span className="sm:hidden">{isZipping ? '...' : 'Download'}</span>
+            <span className="hidden sm:inline">{isZipping ? t.zipping : t.downloadSelected}</span>
+            <span className="sm:hidden">{isZipping ? '...' : t.download}</span>
           </button>
         </div>
       </header>
@@ -519,7 +724,7 @@ const App = () => {
                   if (!isZipping) deleteFrame(frame.id);
                 }}
                 className="absolute top-3 right-3 p-1.5 rounded-full bg-black/50 backdrop-blur-md text-white/70 hover:text-red-400 hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"
-                title="Delete frame"
+                title={t.deleteFrame}
                 disabled={isZipping}
               >
                 <Trash2 className="w-4 h-4" />
@@ -549,14 +754,14 @@ const App = () => {
                  <button
                     className="p-2 text-neutral-400 hover:text-red-400 bg-black/50 rounded-full backdrop-blur-md transition-colors"
                     onClick={() => deleteFrame(expandedFrame.id)}
-                    title="Delete frame"
+                    title={t.deleteFrame}
                  >
                      <Trash2 className="w-6 h-6" />
                  </button>
                  <button 
                     className="p-2 text-neutral-400 hover:text-white bg-black/50 rounded-full backdrop-blur-md transition-colors"
                     onClick={() => setExpandedFrame(null)}
-                    title="Close"
+                    title={t.close}
                  >
                     <X className="w-6 h-6" />
                  </button>
@@ -577,7 +782,7 @@ const App = () => {
                     `}
                 >
                     {expandedFrame.selected ? <CheckCircle className="w-4 h-4 fill-black/10" /> : <div className="w-4 h-4 rounded-full border-2 border-current" />}
-                    <span>{expandedFrame.selected ? 'Selected' : 'Select'}</span>
+                    <span>{expandedFrame.selected ? t.statusSelected : t.actionSelect}</span>
                 </button>
              </div>
 
@@ -586,7 +791,7 @@ const App = () => {
                 <button
                     className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-neutral-400 hover:text-white bg-black/30 hover:bg-black/60 rounded-full backdrop-blur-md transition-all z-50"
                     onClick={(e) => { e.stopPropagation(); goToPrev(); }}
-                    title="Previous frame (Left Arrow)"
+                    title={t.prevFrame}
                 >
                     <ChevronLeft className="w-8 h-8" />
                 </button>
@@ -595,7 +800,7 @@ const App = () => {
                 <button
                     className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-neutral-400 hover:text-white bg-black/30 hover:bg-black/60 rounded-full backdrop-blur-md transition-all z-50"
                     onClick={(e) => { e.stopPropagation(); goToNext(); }}
-                    title="Next frame (Right Arrow)"
+                    title={t.nextFrame}
                 >
                     <ChevronRight className="w-8 h-8" />
                 </button>
@@ -619,26 +824,26 @@ const App = () => {
       {/* Contribution Section */}
       <div className="pt-6 flex flex-col items-center space-y-4">
         <p className="text-neutral-500 text-sm font-light max-w-md mx-auto text-center">
-          Contribute to the development by {' '}
+          {t.contribPre} {' '}
           <a
             href="https://docs.google.com/forms/d/e/1FAIpQLSeXTkgfM2dzjdU6CVtiQ6EReHgcmdK5KzmGmNZOuO_p50X_kg/viewform"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-400/80 hover:text-blue-300 underline underline-offset-4 transition-colors"
           >
-            giving feedback
+            {t.contribLink}
           </a>
           {' '} :)
         </p>
         <div className="w-[30%] min-w-[120px] max-w-[200px] hover:opacity-100 opacity-90 transition-opacity">
           <img
-            src="https://github.com/0ethel0zhang/folio_magic/blob/main/venmo_qr.png?raw=true"
+            src="https://github.com/0ethel0zhang/folio_magic/blob/main/IMG_9285.jpeg?raw=true"
             alt="Venmo QR Code"
             className="w-full h-auto rounded-xl border border-neutral-800/50"
           />
         </div>
         <p className="text-neutral-500 text-xs font-bold">
-          Developed by BringEZBack @ 2025.
+          {t.developedBy}
         </p>
       </div>
     </div>
