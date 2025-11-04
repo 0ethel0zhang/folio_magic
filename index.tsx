@@ -15,8 +15,8 @@ type Language = 'en' | 'zh' | 'fr' | 'de' | 'es';
 
 const TRANSLATIONS: Record<Language, Record<string, string>> = {
   en: {
-    tagline: "Video to Portfolio. Extract high-fidelity stills from your videos. In seconds.",
-    dragDrop: "Drag and drop your video here",
+    tagline: "Video to Photos. Extract high-fidelity stills from your videos. In seconds.",
+    dragDrop: "Drag and drop your video to this box",
     browse: "or click to browse (MP4, MOV, WebM)",
     processing: "Analyzing Video & Extracting Stills",
     complete: "Complete",
@@ -111,10 +111,10 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     developedBy: "Développé par BringEZBack @ 2025."
   },
   de: {
-    tagline: "Video zum Portfolio. Extrahieren Sie hochauflösende Standbilder aus Ihren Videos. In Sekunden.",
+    tagline: "Video zum Fotos. Machen Sie hochauflösende Standbilder aus Ihren Videos. In Sekunden.",
     dragDrop: "Ziehen Sie Ihr Video hierher",
-    browse: "oder klicken Sie zum Durchsuchen (MP4, MOV, WebM)",
-    processing: "Video analysieren & Standbilder extrahieren",
+    browse: "oder klicken Sie, um das Feld zum Durchsuchen (MP4, MOV, WebM)",
+    processing: "Video analysieren & Standbilder machen",
     complete: "Abgeschlossen",
     curatorTitle: "Portfolio-Kurator",
     selectedCount: "ausgewählt",
