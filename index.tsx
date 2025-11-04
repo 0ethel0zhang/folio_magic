@@ -16,8 +16,8 @@ type Language = 'en' | 'zh' | 'fr' | 'de' | 'es';
 const TRANSLATIONS: Record<Language, Record<string, string>> = {
   en: {
     tagline: "Video to Photos. Extract high-fidelity stills from your videos. In seconds.",
-    dragDrop: "Drag and drop your video to this box",
-    browse: "or click to browse (MP4, MOV, WebM)",
+    dragDrop: "Drag and drop your video",
+    browse: "or click this box to browse (MP4, MOV, WebM)",
     processing: "Analyzing Video & Extracting Stills",
     complete: "Complete",
     curatorTitle: "Portfolio Curator",
