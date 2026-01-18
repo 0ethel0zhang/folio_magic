@@ -585,18 +585,20 @@ const App = () => {
             >
               <span className="sr-only">{t.dragDrop}</span>
             </label>
-            <div className="flex flex-col space-y-2 mb-4">
-              <label className="text-neutral-400 text-sm">Diff Duration (seconds)</label>
+          </div>
+
+          {/* Contribution Section */}
+          <div className="flex flex-col space-y-2 mb-4">
+              <label className="text-neutral-400 text-sm justify-center">Interval Duration (seconds)</label>
               <input
                 type="number"
                 value={diffDuration}
                 onChange={(e) => setDiffDuration(Number(e.target.value))}
-                step={0.1}
-                min={0.1}
+                step={0.001}
+                min={0.001}
                 className="bg-neutral-800 text-white rounded p-2"
               />
             </div>
-          </div>
           
           {/* Contribution Section */}
           <div className="pt-6 flex flex-col items-center space-y-4">
