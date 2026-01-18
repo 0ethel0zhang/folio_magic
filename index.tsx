@@ -22,7 +22,7 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     complete: "Complete",
     curatorTitle: "Portfolio Curator",
     selectedCount: "selected",
-    framesLeft: "left",
+    framesLeft: "exported",
     selectAll: "Select All",
     deselectAll: "Deselect All",
     startOver: "Start Over",
@@ -54,7 +54,7 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     complete: "完成",
     curatorTitle: "作品集精选",
     selectedCount: "已选择",
-    framesLeft: "剩余",
+    : "剩余",
     selectAll: "全选",
     deselectAll: "取消全选",
     startOver: "重新开始",
@@ -280,7 +280,7 @@ const App = () => {
     const targetFrameCount = 30;
     const maxFrameCount = 100;
     let interval = 0;
-    if (diffDuration) {
+    if (diffDuration > 0 || diffDuration) {
       interval = Math.max(diffDuration, duration / maxFrameCount);
     } else {
       // Allow tighter spacing for short videos (down to 0.1s), ensuring we get enough frames
@@ -364,7 +364,7 @@ const App = () => {
             id: `frame-${currentTime.toFixed(2)}`,
             url,
             blob,
-            selected: true,
+            selected: false,
             timestamp: currentTime
           });
         }
@@ -594,9 +594,9 @@ const App = () => {
                 type="number"
                 value={diffDuration}
                 onChange={(e) => setDiffDuration(Number(e.target.value))}
-                step={0.001}
-                min={0.001}
-                className="bg-neutral-800 text-white rounded p-2"
+                step={0.1}
+                min={0.1}
+                className="bg-neutral-800 text-white rounded p-2 justify-center"
               />
             </div>
           
