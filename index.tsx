@@ -281,7 +281,7 @@ const App = () => {
     const maxFrameCount = 100;
     let interval = 0;
     if diffDuration {
-      interval = interval = Math.max(diffDuration, duration / maxFrameCount);
+      interval = Math.max(diffDuration, duration / maxFrameCount);
     } else {
       // Allow tighter spacing for short videos (down to 0.1s), ensuring we get enough frames
       // but don't over-process very long videos.
