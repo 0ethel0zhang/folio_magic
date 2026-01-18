@@ -54,7 +54,7 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     complete: "完成",
     curatorTitle: "作品集精选",
     selectedCount: "已选择",
-    : "剩余",
+    framesLeft: "选择",
     selectAll: "全选",
     deselectAll: "取消全选",
     startOver: "重新开始",
