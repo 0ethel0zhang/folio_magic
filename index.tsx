@@ -216,6 +216,7 @@ const App = () => {
   const [isZipping, setIsZipping] = useState(false);
   const [expandedFrame, setExpandedFrame] = useState<PortfolioFrame | null>(null);
   const [currentLang, setCurrentLang] = useState<Language>(getInitialLanguage);
+  const [diffDuration, setDiffDuration] = useState(1);
 
   const t = TRANSLATIONS[currentLang];
 
@@ -275,11 +276,17 @@ const App = () => {
     const width = video.videoWidth;
     const height = video.videoHeight;
 
-    // Target roughly 30 frames for a good portfolio selection without crashing memory
+    // Target roughly 30 frames / user-specific intervals for a good portfolio selection without crashing memory
     const targetFrameCount = 30;
-    // Allow tighter spacing for short videos (down to 0.1s), ensuring we get enough frames
-    // but don't over-process very long videos.
-    const interval = Math.max(0.1, duration / targetFrameCount);
+    const maxFrameCount = 100;
+    let interval = 0;
+    if diffDuration {
+      interval = interval = Math.max(diffDuration, duration / maxFrameCount);
+    } else {
+      // Allow tighter spacing for short videos (down to 0.1s), ensuring we get enough frames
+      // but don't over-process very long videos.
+      interval = Math.max(0.1, duration / targetFrameCount);
+    }
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -578,6 +585,17 @@ const App = () => {
             >
               <span className="sr-only">{t.dragDrop}</span>
             </label>
+            <div className="flex flex-col space-y-2 mb-4">
+              <label className="text-neutral-400 text-sm">Diff Duration (seconds)</label>
+              <input
+                type="number"
+                value={diffDuration}
+                onChange={(e) => setDiffDuration(Number(e.target.value))}
+                step={0.1}
+                min={0.1}
+                className="bg-neutral-800 text-white rounded p-2"
+              />
+            </div>
           </div>
           
           {/* Contribution Section */}
