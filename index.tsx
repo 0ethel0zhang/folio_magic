@@ -278,7 +278,7 @@ const App = () => {
 
     // Target roughly 30 frames / user-specific intervals for a good portfolio selection without crashing memory
     const targetFrameCount = 30;
-    const maxFrameCount = 100;
+    const maxFrameCount = 600;
     let interval = 0;
     if (diffDuration > 0 || diffDuration) {
       interval = Math.max(diffDuration, duration / maxFrameCount);
@@ -306,7 +306,7 @@ const App = () => {
     
     // Safeguard: hard limit on iterations to prevent any possibility of infinite loops
     let loopCount = 0;
-    const MAX_LOOPS = 60; 
+    const MAX_LOOPS = 600; 
 
     try {
       while (currentTime < duration && loopCount < MAX_LOOPS) {
