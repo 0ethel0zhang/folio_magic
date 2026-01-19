@@ -13,6 +13,28 @@ interface PortfolioFrame {
 
 type Language = 'en' | 'zh' | 'fr' | 'de' | 'es';
 
+const TopBanner: React.FC = () => {
+    return (
+        <div className="bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 text-white py-2.5 px-4 text-center text-sm font-medium border-b border-white/10 relative overflow-hidden animate-in fade-in slide-in-from-top-2 duration-700">
+            {/* Background glitter/effect optional */}
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-150"></div>
+
+            <div className="flex md:flex-row items-center justify-center gap-2 md:gap-8 relative z-10">
+                <a
+                    href="https://foliorankai.bringezback.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 hover:text-indigo-200 transition-colors group"
+                >
+                    <span role="img" aria-label="trophy" className="animate-pulse">🏆</span>
+                    <span>Not sure which pictures to pick? Try FolioRankAI for personalized AI suggestions!</span>
+                    <span className="underline decoration-indigo-400/50 group-hover:decoration-indigo-300">Take me to FolioRankAI &rarr;</span>
+                </a>
+            </div>
+        </div>
+    );
+};
+
 const TRANSLATIONS: Record<Language, Record<string, string>> = {
   en: {
     tagline: "Video to Photos. Extract high-fidelity stills from your videos. In seconds.",
@@ -645,6 +667,8 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex flex-col">
+      {/* Top Banner */}
+      <TopBanner />
       {/* Fixed Header */}
       <header className="bg-neutral-900/80 backdrop-blur-md border-b border-neutral-800 sticky top-0 z-40 px-4 md:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
