@@ -736,7 +736,7 @@ const App = () => {
               <img
                 src={frame.url}
                 alt={`Frame at ${frame.timestamp}s`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 loading="lazy"
                 onError={(e) => {
                     // Visual indicator if frame breaks, though fix above should prevent this.
