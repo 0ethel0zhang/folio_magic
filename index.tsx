@@ -239,6 +239,7 @@ const App = () => {
   const [expandedFrame, setExpandedFrame] = useState<PortfolioFrame | null>(null);
   const [currentLang, setCurrentLang] = useState<Language>(getInitialLanguage);
   const [diffDuration, setDiffDuration] = useState(1);
+  const [galleryAspectRatio, setGalleryAspectRatio] = useState<string>('3/4');
 
   const t = TRANSLATIONS[currentLang];
 
@@ -297,6 +298,8 @@ const App = () => {
 
     const width = video.videoWidth;
     const height = video.videoHeight;
+    const initialRatio = width / height;
+    let isMixed = false;
 
     // Target roughly 30 frames / user-specific intervals for a good portfolio selection without crashing memory
     const targetFrameCount = 30;
@@ -374,6 +377,11 @@ const App = () => {
             console.error("Error seeking frame:", e);
         }
 
+        // Check for mixed aspect ratio
+        if (Math.abs((video.videoWidth / video.videoHeight) - initialRatio) > 0.01) {
+          isMixed = true;
+        }
+
         // Draw frame to canvas
         ctx.drawImage(video, 0, 0, width, height);
 
@@ -404,6 +412,12 @@ const App = () => {
       }
       video.remove();
       canvas.remove();
+
+      if (isMixed) {
+        setGalleryAspectRatio('1/1');
+      } else {
+        setGalleryAspectRatio(`${width}/${height}`);
+      }
 
       setFrames(newFrames);
       setIsProcessing(false);
@@ -439,6 +453,7 @@ const App = () => {
     setVideoFile(null);
     setProgress(0);
     setIsProcessing(false);
+    setGalleryAspectRatio('3/4');
   }, []);
 
   const toggleFrameSelection = (id: string) => {
@@ -728,9 +743,10 @@ const App = () => {
             <div
               key={frame.id}
               className={`
-                relative group aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 cursor-pointer border transition-all duration-200
+                relative group rounded-lg overflow-hidden bg-neutral-900 cursor-pointer border transition-all duration-200
                 ${frame.selected ? 'border-white/40 ring-1 ring-white/10' : 'border-transparent opacity-80 hover:opacity-100'}
               `}
+              style={{ aspectRatio: galleryAspectRatio }}
               onClick={() => !isZipping && setExpandedFrame(frame)}
             >
               <img
