@@ -562,6 +562,19 @@ const App = () => {
   }, [expandedFrame, goToPrev, goToNext]);
 
   const selectedCount = frames.filter(f => f.selected).length;
+
+  {/* Configuration Section */}
+  <div className="flex flex-col space-y-2 mb-4">
+      <label className="text-neutral-400 text-sm justify-center">Frames per Second</label>
+      <input
+        type="number"
+        value={framepSecond}
+        onChange={(e) => setFramepSecond(Number(e.target.value))}
+        step={1}
+        min={0.01}
+        className="bg-neutral-800 text-white rounded p-2 justify-center"
+      />
+    </div>
   
   // --- Renderers ---
 
@@ -576,19 +589,6 @@ const App = () => {
             <h1 className="text-4xl md:text-5xl font-light tracking-tight text-neutral-100">Folio</h1>
             <p className="text-neutral-400 text-lg">{t.tagline}</p>
           </div>
-
-          {/* Configuration Section */}
-          <div className="flex flex-col space-y-2 mb-4">
-              <label className="text-neutral-400 text-sm justify-center">Frames per Second</label>
-              <input
-                type="number"
-                value={framepSecond}
-                onChange={(e) => setFramepSecond(Number(e.target.value))}
-                step={1}
-                min={0.01}
-                className="bg-neutral-800 text-white rounded p-2 justify-center"
-              />
-            </div>
           
           <div
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
