@@ -3,13 +3,15 @@
 Convert your video into high-quality photos in seconds.
 
 https://folio.bringezback.com/<br/>
+[Folio Logo](https://github.com/user-attachments/assets/d79dfdb2-14dc-411b-97d3-31fdbcb1bb1a)
 <img width="647" height="143" alt="Folio_logo" src="https://github.com/user-attachments/assets/ea1d4090-f720-4d0c-9fd2-1cdcb2e40053" />
 
 <br/>
 
 ## Latest Releases
 - Multilingual support
-- Usaability updates
+- Usaability updates!
+
 
 ## Upcoming Features
 - Option to prioritize faces/figures in frames
