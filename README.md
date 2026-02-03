@@ -4,7 +4,7 @@ Convert your video into high-quality photos in seconds.
 
 https://folio.bringezback.com/<br/>
 
-<img width="647" height="143" alt="Folio_logo" src="https://github.com/user-attachments/assets/d79dfdb2-14dc-411b-97d3-31fdbcb1bb1a" />
+<img width="143" height="143" alt="Folio_logo" src="https://github.com/user-attachments/assets/d79dfdb2-14dc-411b-97d3-31fdbcb1bb1a" />
 
 <br/>
 
