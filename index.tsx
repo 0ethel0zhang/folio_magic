@@ -238,9 +238,14 @@ const App = () => {
   const [isZipping, setIsZipping] = useState(false);
   const [expandedFrame, setExpandedFrame] = useState<PortfolioFrame | null>(null);
   const [currentLang, setCurrentLang] = useState<Language>(getInitialLanguage);
-  const [diffDuration, setDiffDuration] = useState(1);
+  const [framepSecond, setFramepSecond] = useState(1);
 
   const t = TRANSLATIONS[currentLang];
+
+  // --- ADD THIS HANDLER ---
+  const handleFpsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFramepSecond(Number(e.target.value));
+  };
 
   // Keep track of frames for safe unmount cleanup without triggering re-renders
   const framesRef = useRef(frames);
@@ -302,8 +307,8 @@ const App = () => {
     const targetFrameCount = 30;
     const maxFrameCount = 600;
     let interval = 0;
-    if (diffDuration > 0 || diffDuration) {
-      interval = Math.max(diffDuration, duration / maxFrameCount);
+    if (framepSecond > 0 || framepSecond) {
+      interval = Math.max(1 / framepSecond, duration / maxFrameCount);
     } else {
       // Allow tighter spacing for short videos (down to 0.1s), ensuring we get enough frames
       // but don't over-process very long videos.
@@ -422,7 +427,7 @@ const App = () => {
     } else {
       alert(t.errInvalid);
     }
-  }, [t, diffDuration]);
+  }, [t, framepSecond]);
 
   const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -562,7 +567,7 @@ const App = () => {
   }, [expandedFrame, goToPrev, goToNext]);
 
   const selectedCount = frames.filter(f => f.selected).length;
-
+  
   // --- Renderers ---
 
   if (!videoFile && !isProcessing && frames.length === 0) {
@@ -577,6 +582,19 @@ const App = () => {
             <p className="text-neutral-400 text-lg">{t.tagline}</p>
           </div>
 
+          {/* FIXED CONFIGURATION SECTION */}
+          <div className="flex flex-col space-y-2 mb-4 items-center">
+            <label className="text-neutral-400 text-sm">Frames per Second</label>
+            <input 
+              type="number" 
+              value={framepSecond} 
+              onChange={handleFpsChange} 
+              step={1} 
+              min={0.01} 
+              className="bg-neutral-800 text-white rounded p-2 w-32 text-center" 
+            />
+          </div>
+          
           <div
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
@@ -608,19 +626,6 @@ const App = () => {
               <span className="sr-only">{t.dragDrop}</span>
             </label>
           </div>
-
-          {/* Contribution Section */}
-          <div className="flex flex-col space-y-2 mb-4">
-              <label className="text-neutral-400 text-sm justify-center">Interval Duration (seconds)</label>
-              <input
-                type="number"
-                value={diffDuration}
-                onChange={(e) => setDiffDuration(Number(e.target.value))}
-                step={0.1}
-                min={0.1}
-                className="bg-neutral-800 text-white rounded p-2 justify-center"
-              />
-            </div>
           
           {/* Contribution Section */}
           <div className="pt-6 flex flex-col items-center space-y-4">
@@ -736,7 +741,7 @@ const App = () => {
               <img
                 src={frame.url}
                 alt={`Frame at ${frame.timestamp}s`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 loading="lazy"
                 onError={(e) => {
                     // Visual indicator if frame breaks, though fix above should prevent this.
